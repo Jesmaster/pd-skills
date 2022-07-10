@@ -1,20 +1,14 @@
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.hide {
-  display: none;
-}
+@layer base {
+    :root {
+      --color-attack: 220 107 69;
+      --color-defense: 75 97 220;
+      --color-environment: 75 220 218;
+      --color-erase: 171 75 220;
+      --color-status: 114 220 81;
+      --color-special: 220 218 75;
+    }
+  }
