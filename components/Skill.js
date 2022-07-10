@@ -11,24 +11,24 @@ import styles from '../styles/Home.module.css'
 const Skill = (props) => {
     const { skill } = props;
     const schoolImages = {
-        psycho: schoolPsycho,
-        optical: schoolOptical,
-        nature: schoolNature,
-        ki: schoolKi,
-        faith: schoolFaith,
+        Psycho: schoolPsycho,
+        Optical: schoolOptical,
+        Nature: schoolNature,
+        Ki: schoolKi,
+        Faith: schoolFaith,
       };
       
       return (
-        <div key={skill.id} className={`${styles.card} ${styles[skill.typeLower]}`}>
+        <div key={skill.id} className={`${styles.card} ${styles[skill.type.toLowerCase()]}`}>
             <header>
             <div className={styles['card-left']}>
                 <span>{skill.id}</span>
                 <h2>{skill.name}</h2>
             </div>
             <div className={styles['card-right']}>
-                {schoolImages[skill.schoolLower] && 
-                <div className={styles['school-image']}>
-                    <Image src={schoolImages[skill.schoolLower]} alt={`${skill.school} school logo`} />
+                {schoolImages[skill.school] && 
+                <div className={`${styles['school-image']} ${skill.school === 'Nature' ? styles['school-image-small'] : ''}`}>
+                    <Image src={schoolImages[skill.school]} alt={`${skill.school} school logo`} />
                 </div>
                 }
             </div>
@@ -44,13 +44,13 @@ const Skill = (props) => {
             <div className={styles.banner}>
                 <strong title="Usable in the air">AIR: {skill.air ? <FaCheck /> : <FaTimes />}</strong>
                 {skill.velocity && <strong title="Velocity">VEL: {skill.velocity}</strong>}
-                {skill.homing.length > 0 && <strong title="Homing">HOM: {skill.homing.join(' / ')}</strong>}
+                {skill.homing && <strong title="Homing">HOM: {skill.homing}</strong>}
                 {skill.recovery && <strong title="Recovery">REC: {skill.recovery}</strong>}
             </div>
-            {(skill.notes || skill.skillText) &&
+            {(skill.notes || skill.skilltext) &&
                 <div className={styles['info-box']}>
                 {skill.notes && <p><small>{skill.notes}</small></p>}
-                <p>{skill.skillText}</p>
+                <p>{skill.skilltext}</p>
                 </div>
             }
             </main>
