@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { useEffect, useMemo, useRef, useState } from "react"
 import Skill from '../components/Skill'
@@ -39,7 +38,6 @@ export default function Home(props) {
 
   useEffect(() => {
     if (isValidating === false && data) {
-      console.log('updating...');
       setFilteredSkills(data);
     }
   }, [data, isValidating]);
