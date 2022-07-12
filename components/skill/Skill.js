@@ -1,9 +1,9 @@
 import Image from 'next/image'
-import schoolPsycho from "../styles/school-psycho.png";
-import schoolOptical from "../styles/school-optical.png";
-import schoolNature from "../styles/school-nature.png";
-import schoolKi from "../styles/school-ki.png";
-import schoolFaith from "../styles/school-faith.png";
+import schoolPsycho from "../../styles/school-psycho.png";
+import schoolOptical from "../../styles/school-optical.png";
+import schoolNature from "../../styles/school-nature.png";
+import schoolKi from "../../styles/school-ki.png";
+import schoolFaith from "../../styles/school-faith.png";
 import { FaCheck, FaInfinity, FaTimes } from "react-icons/fa";
 import { GiAbstract103 } from "react-icons/gi"
 import styles from './Skill.module.css';
