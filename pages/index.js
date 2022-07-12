@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { useEffect, useMemo, useRef, useState } from "react"
 import Skill from '../components/Skill'
@@ -39,7 +38,6 @@ export default function Home(props) {
 
   useEffect(() => {
     if (isValidating === false && data) {
-      console.log('updating...');
       setFilteredSkills(data);
     }
   }, [data, isValidating]);
@@ -52,15 +50,15 @@ export default function Home(props) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-         Phantom Dust Skill List
+      <main className={`min-h-screen py-16 flex flex-col items-center`}>
+        <h1 className={`text-center font-bold text-[#eee] text-5xl md:text-7xl mb-16`}>
+          Phantom Dust Skill List
         </h1>
 
-        <form>
-          <div className={styles['form-input-wrapper']}>
-            <label htmlFor="school">School:</label>
-            <select ref={schoolSelectRef} name="school" onChange={schoolFilterChangeHandler}>
+        <form className='border-black border p-4 bg-white flex flex-wrap'>
+          <div className={`flex flex-col gap-1`}>
+            <label className='font-bold' htmlFor="school">School:</label>
+            <select className={'py-2 px-4 rounded'} ref={schoolSelectRef} name="school" onChange={schoolFilterChangeHandler}>
               <option value="">- All -</option>
               <option value="Psycho">Psycho</option>
               <option value="Optical">Optical</option>
@@ -71,25 +69,13 @@ export default function Home(props) {
           </div>
         </form>
 
-        <div className={styles.grid}>
+        <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8`}>
           {filteredSkills && filteredSkills.map(skill => <Skill key={skill.id} skill={skill} />)}
         </div>
       </main>
 
-      <footer className={styles.footer}>
-        <p>Site created by <a href="mailto:jesmasterha@gmail.com">Jesmaster</a></p>
-        <p>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Powered by{' '}
-            <span className={styles.logo}>
-              <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-            </span>
-          </a>
-        </p>
+      <footer className='text-[#eee] text-center pb-8'>
+        <p>Site created by <a className='underline hover:no-underline' href="mailto:jesmasterha@gmail.com">Jesmaster</a></p>
       </footer>
     </div>
   )

@@ -1,0 +1,40 @@
+.skill {
+    border-top-right-radius: 0.5em 1em;
+}
+
+.skill-header:before {
+    background-color: rgba(0, 0, 0, 1);
+    content: '';
+    height: 33px;
+    position: absolute;
+    width: 5px;
+    left: calc(-1.5rem - 1px);
+    top: 3px;
+}
+
+.school-image {
+    margin-left:30px;
+    max-width: 70px;
+}
+  
+.school-image-nature {
+    max-width: 50px;
+}
+
+.info-box {
+    background: linear-gradient(
+        to bottom,
+        #a3a9a0,
+        #a3a9a0 50%,
+        #959388 50%,
+        #959388
+      );
+      background-size: 100% 5px;
+}
+
+@media (max-width: 600px) {
+    .skill-header:before {
+        left: calc(-0.875rem - 1px);
+        top: 0px;
+    }
+}
