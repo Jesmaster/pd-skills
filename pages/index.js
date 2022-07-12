@@ -1,24 +1,35 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import { useEffect, useMemo, useRef, useState } from "react"
-import Skill from '../components/Skill'
+import { useEffect, useMemo, useState } from "react"
+import Skill from '../components/skill/Skill'
 import useSWR from 'swr'
+import QueryString from 'qs'
 import { getSkills } from '../lib/query'
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Home(props) {
-  const { skills } = props;
+  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters } = props;
 
   const [filteredSkills, setFilteredSkills] = useState(skills);
-  const [filters, setFilters] = useState({
-    school: '',
-    type: '',
-  });
+  
+  const [schoolFilters, setSchoolFilters] = useState(allSchoolFilters);
+  const [typeFilters, setTypeFilters] = useState(allTypeFilters);
+  const [distanceFilters, setDistanceFilters] = useState(allDistanceFilters);
+  const [airOk, setAirOk] = useState(false);
+
+  const filters = useMemo(() => {
+    return {
+      school: schoolFilters.filter(item => item.checked).map(item => item.name),
+      type: typeFilters.filter(item => item.checked).map(item => item.name),
+      distance: distanceFilters.filter(item => item.checked).map(item => item.name),
+      air: airOk,
+    }
+  }, [schoolFilters, typeFilters, distanceFilters, airOk]);
 
   const swrKey = useMemo(() => {
-    const searchParams = new URLSearchParams(
-      Object.entries(filters).reduce((a,[k,v]) => (v === '' ? a : (a[k]=v, a)), {})
+    const searchParams = QueryString.stringify(
+      Object.entries(filters).reduce((a,[k,v]) => (v === '' || v === false || (Array.isArray(v) && v.length === 0) ? a : (a[k]=v, a)), {})
     );
 
     return `/api/skills${searchParams.toString !== '' ? `?${searchParams.toString()}` : ''}`;
@@ -28,12 +39,26 @@ export default function Home(props) {
     revalidateOnFocus: false,
   });
 
-  const schoolSelectRef = useRef();
+  const filterChangeHandler = (index, items) => {
+    return items.map((item, delta) => 
+      index === delta ? { ...item, checked: !item.checked} : item
+    ) 
+  }
 
-  const schoolFilterChangeHandler = () => {
-    setFilters(prev => {
-      return {...prev, school: schoolSelectRef.current.value}
-    });
+  const schoolFilterChangeHandler = (index) => {
+    setSchoolFilters(prev => filterChangeHandler(index, prev));
+  }
+
+  const typeFilterChangeHandler = (index) => {
+    setTypeFilters(prev => filterChangeHandler(index, prev));
+  }
+
+  const distanceFilterChangeHandler = (index) => {
+    setDistanceFilters(prev => filterChangeHandler(index, prev));
+  }
+
+  const airOkChangeHandler = () => {
+    setAirOk(prev => !prev);
   }
 
   useEffect(() => {
@@ -55,17 +80,63 @@ export default function Home(props) {
           Phantom Dust Skill List
         </h1>
 
-        <form className='border-black border p-4 bg-white flex flex-wrap'>
-          <div className={`flex flex-col gap-1`}>
-            <label className='font-bold' htmlFor="school">School:</label>
-            <select className={'py-2 px-4 rounded'} ref={schoolSelectRef} name="school" onChange={schoolFilterChangeHandler}>
-              <option value="">- All -</option>
-              <option value="Psycho">Psycho</option>
-              <option value="Optical">Optical</option>
-              <option value="Nature">Nature</option>
-              <option value="Ki">Ki</option>
-              <option value="Faith">Faith</option>
-            </select>
+        <form className='flex flex-col md:flex-row flex-wrap justify-center gap-4 p-4'>
+          <div className='border-black border p-4 bg-white flex flex-wrap'>
+            <fieldset className='flex flex-wrap gap-4'>
+              <legend className='font-bold mb-2'>School:</legend>
+              {schoolFilters.map((item, index) => {
+                const { name, checked } = item;
+
+                return (
+                  <div className='flex flex-wrap items-center gap-1' key={name}>
+                    <input checked={checked} onChange={() => schoolFilterChangeHandler(index)} type="checkbox" name="school" value={name} id={name} />
+                    <label htmlFor={name}>{name}</label>
+                  </div>
+                )
+              })}
+            </fieldset>
+          </div>
+
+          <div className='border-black border p-4 bg-white flex flex-wrap'>
+            <fieldset className='flex flex-wrap gap-4'>
+              <legend className='font-bold mb-2'>Type:</legend>
+              {typeFilters.map((item, index) => {
+                const { name, checked } = item;
+
+                return (
+                  <div className='flex flex-wrap items-center gap-1' key={name}>
+                    <input checked={checked} onChange={() => typeFilterChangeHandler(index)} type="checkbox" name="type" value={name} id={name} />
+                    <label htmlFor={name}>{name}</label>
+                  </div>
+                )
+              })}
+            </fieldset>
+          </div>
+
+          <div className='border-black border p-4 bg-white flex flex-wrap'>
+            <fieldset className='flex flex-wrap gap-4'>
+              <legend className='font-bold mb-2'>Distance:</legend>
+              {distanceFilters.map((item, index) => {
+                const { name, checked } = item;
+
+                return (
+                  <div className='flex flex-wrap items-center gap-1' key={name}>
+                    <input checked={checked} onChange={() => distanceFilterChangeHandler(index)} type="checkbox" name="distance" value={name} id={name} />
+                    <label htmlFor={name}>{name}</label>
+                  </div>
+                )
+              })}
+            </fieldset>
+          </div>
+
+          <div className='border-black border p-4 bg-white flex flex-wrap'>
+            <fieldset className='flex flex-wrap gap-4'>
+              <legend className='font-bold mb-2'>Air:</legend>
+              <div className='flex flex-wrap items-center gap-1' key="air_ok">
+                <input checked={airOk} onChange={airOkChangeHandler} type="checkbox" name="air_ok" value={airOk} id="air-ok" />
+                <label htmlFor="air-ok">Perfomable in the air?</label>
+              </div>
+            </fieldset>
           </div>
         </form>
 
@@ -83,9 +154,15 @@ export default function Home(props) {
 
 export async function getStaticProps(context) {
   const skills = await getSkills({});
+  const allSchoolFilters = ['Psycho', 'Optical', 'Nature', 'Ki', 'Faith'].map(item => { return { name: item, checked: false }} );
+  const allTypeFilters = ['Attack', 'Defense', 'Erase', 'Environment', 'Status', 'Special'].map(item => { return { name: item, checked: false } });
+  const allDistanceFilters = ['short', 'medium', 'long', 'all', 'self', 'auto', 'mine', 'capsule'].map(item => { return { name: item, checked: false } });
 
   return {
     props: {
+      allSchoolFilters,
+      allTypeFilters,
+      allDistanceFilters,
       skills,
     }
   }
