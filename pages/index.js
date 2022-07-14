@@ -10,7 +10,7 @@ import { getSkills } from '../lib/query'
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Home(props) {
-  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords } = props;
+  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery } = props;
 
   const [filteredSkills, setFilteredSkills] = useState(skills);
   
@@ -21,6 +21,9 @@ export default function Home(props) {
   const [costFilters, setCostFilters] = useState(allCosts);
   const [strFilters, setStrFilters] = useState(allStr);
   const [keywordFilters, setKeywordFilters] = useState(allKeywords);
+  const [velocityFilters, setVelocityFilters] = useState(allVelocity);
+  const [homingFilters, setHomingFilters] = useState(allHoming);
+  const [recoveryFilters, setRecoveryFilters] = useState(allRecovery);
 
   const schoolFilter = useMemo(() => {
     return schoolFilters.filter(item => item.checked).map(item => item.name);
@@ -40,6 +43,9 @@ export default function Home(props) {
 
   const { value: costFilter, comp: costOpFilter } = costFilters;
   const { value: strFilter, comp: strOpFilter } = strFilters;
+  const { value: velocityFilter, comp: velocityOpFilter } = velocityFilters;
+  const { value: homingFilter, comp: homingOpFilter } = homingFilters;
+  const { value: recoveryFilter, comp: recoveryOpFilter } = recoveryFilters;
 
   const filters = useMemo(() => {
     return {
@@ -52,8 +58,14 @@ export default function Home(props) {
       str: strFilter,
       strOp: strOpFilter,
       keyword: keywordFilter,
+      velocity: velocityFilter,
+      velocityOp: velocityOpFilter,
+      homing: homingFilter,
+      homingOp: homingOpFilter,
+      recovery: recoveryFilter,
+      recoveryOp: recoveryOpFilter,
     }
-  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter]);
+  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter, velocityFilter, velocityOpFilter, homingFilter, homingOpFilter, recoveryFilter, recoveryOpFilter]);
 
   const swrKey = useMemo(() => {
     
@@ -74,6 +86,18 @@ export default function Home(props) {
       else if (params.str === 'X' && params.strOp !== 'eq') {
         delete params.str;
         delete params.strOp;
+      }
+
+      if (params.velocity === undefined) {
+        delete params.velocityOp;
+      }
+
+      if (params.homing === undefined) {
+        delete params.homingOp;
+      }
+
+      if (params.recovery === undefined) {
+        delete params.recoveryOp;
       }
 
       return params;
@@ -126,6 +150,18 @@ export default function Home(props) {
     setStrFilters(prev => filterSelectChangeHandler(value, comp, prev));
   }
 
+  const velocityFilterChangeHandler = (value, comp) => {
+    setVelocityFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
+  const homingFilterChangeHandler = (value, comp) => {
+    setHomingFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
+  const recoveryFilterChangeHandler = (value, comp) => {
+    setRecoveryFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
   useEffect(() => {
     if (isValidating === false && data) {
       setFilteredSkills(data);
@@ -153,6 +189,9 @@ export default function Home(props) {
           <Fieldset type="select" fieldsetName="Cost" filters={costFilters} onChange={costFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Str/Def" filters={strFilters} onChange={strFilterChangeHandler} />
           <Fieldset type="checkboxes" fieldsetName="Keywords" filters={keywordFilters} onChange={keywordFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Velocity" filters={velocityFilters} onChange={velocityFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Homing" filters={homingFilters} onChange={homingFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Recovery" filters={recoveryFilters} onChange={recoveryFilterChangeHandler} />
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
@@ -192,6 +231,11 @@ export async function getStaticProps(context) {
     'Shelter'
   ].map(item => { return { name: item, checked: false } });
 
+  const rankings = ['', 1, 2, 3, 4, 5];
+  const allVelocity = { items: rankings, comp: 'eq', value: ''};
+  const allHoming = { items: rankings, comp: 'eq', value: ''};
+  const allRecovery = { items: rankings, comp: 'eq', value: ''};
+
   return {
     props: {
       allSchoolFilters,
@@ -200,6 +244,9 @@ export async function getStaticProps(context) {
       allCosts,
       allStr,
       allKeywords,
+      allVelocity,
+      allHoming,
+      allRecovery,
       skills,
     }
   }
