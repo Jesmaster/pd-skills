@@ -2,6 +2,7 @@ import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import { useEffect, useMemo, useState } from "react"
 import Skill from '../components/skill/Skill'
+import Fieldset from '../components/form/Fieldset'
 import useSWR from 'swr'
 import QueryString from 'qs'
 import { getSkills } from '../lib/query'
@@ -9,7 +10,7 @@ import { getSkills } from '../lib/query'
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Home(props) {
-  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters } = props;
+  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery } = props;
 
   const [filteredSkills, setFilteredSkills] = useState(skills);
   
@@ -17,20 +18,92 @@ export default function Home(props) {
   const [typeFilters, setTypeFilters] = useState(allTypeFilters);
   const [distanceFilters, setDistanceFilters] = useState(allDistanceFilters);
   const [airOk, setAirOk] = useState(false);
+  const [costFilters, setCostFilters] = useState(allCosts);
+  const [strFilters, setStrFilters] = useState(allStr);
+  const [keywordFilters, setKeywordFilters] = useState(allKeywords);
+  const [velocityFilters, setVelocityFilters] = useState(allVelocity);
+  const [homingFilters, setHomingFilters] = useState(allHoming);
+  const [recoveryFilters, setRecoveryFilters] = useState(allRecovery);
+
+  const schoolFilter = useMemo(() => {
+    return schoolFilters.filter(item => item.checked).map(item => item.name);
+  }, [schoolFilters]);
+
+  const typeFilter = useMemo(() => {
+    return typeFilters.filter(item => item.checked).map(item => item.name)
+  }, [typeFilters]);
+
+  const distanceFilter = useMemo(() => {
+    return distanceFilters.filter(item => item.checked).map(item => item.name)
+  }, [distanceFilters]);
+
+  const keywordFilter = useMemo(() => {
+    return keywordFilters.filter(item => item.checked).map(item => item.name)
+  }, [keywordFilters]);
+
+  const { value: costFilter, comp: costOpFilter } = costFilters;
+  const { value: strFilter, comp: strOpFilter } = strFilters;
+  const { value: velocityFilter, comp: velocityOpFilter } = velocityFilters;
+  const { value: homingFilter, comp: homingOpFilter } = homingFilters;
+  const { value: recoveryFilter, comp: recoveryOpFilter } = recoveryFilters;
 
   const filters = useMemo(() => {
     return {
-      school: schoolFilters.filter(item => item.checked).map(item => item.name),
-      type: typeFilters.filter(item => item.checked).map(item => item.name),
-      distance: distanceFilters.filter(item => item.checked).map(item => item.name),
+      school: schoolFilter,
+      type: typeFilter,
+      distance: distanceFilter,
       air: airOk,
+      cost: costFilter,
+      costOp: costOpFilter,
+      str: strFilter,
+      strOp: strOpFilter,
+      keyword: keywordFilter,
+      velocity: velocityFilter,
+      velocityOp: velocityOpFilter,
+      homing: homingFilter,
+      homingOp: homingOpFilter,
+      recovery: recoveryFilter,
+      recoveryOp: recoveryOpFilter,
     }
-  }, [schoolFilters, typeFilters, distanceFilters, airOk]);
+  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter, velocityFilter, velocityOpFilter, homingFilter, homingOpFilter, recoveryFilter, recoveryOpFilter]);
 
   const swrKey = useMemo(() => {
-    const searchParams = QueryString.stringify(
-      Object.entries(filters).reduce((a,[k,v]) => (v === '' || v === false || (Array.isArray(v) && v.length === 0) ? a : (a[k]=v, a)), {})
-    );
+    
+    const buildParams = () => {
+      let params = Object.entries(filters).reduce((a,[k,v]) => (v === '' || v === false || (Array.isArray(v) && v.length === 0) ? a : (a[k]=v, a)), {});
+
+      if (params.cost === undefined) {
+        delete params.costOp;
+      }
+      else if (params.cost === 'X' && params.costOp !== 'eq') {
+        delete params.cost;
+        delete params.costOp;
+      }
+
+      if (params.str === undefined) {
+        delete params.strOp;
+      }
+      else if (params.str === 'X' && params.strOp !== 'eq') {
+        delete params.str;
+        delete params.strOp;
+      }
+
+      if (params.velocity === undefined) {
+        delete params.velocityOp;
+      }
+
+      if (params.homing === undefined) {
+        delete params.homingOp;
+      }
+
+      if (params.recovery === undefined) {
+        delete params.recoveryOp;
+      }
+
+      return params;
+    }
+
+    const searchParams = QueryString.stringify(buildParams());
 
     return `/api/skills${searchParams.toString !== '' ? `?${searchParams.toString()}` : ''}`;
   }, [filters]);
@@ -39,26 +112,54 @@ export default function Home(props) {
     revalidateOnFocus: false,
   });
 
-  const filterChangeHandler = (index, items) => {
+  const filterCheckboxChangeHandler = (index, items) => {
     return items.map((item, delta) => 
       index === delta ? { ...item, checked: !item.checked} : item
     ) 
   }
 
+  const filterSelectChangeHandler = (value, comp, prev) => {
+    return { ...prev, value, comp }
+  }
+
   const schoolFilterChangeHandler = (index) => {
-    setSchoolFilters(prev => filterChangeHandler(index, prev));
+    setSchoolFilters(prev => filterCheckboxChangeHandler(index, prev));
   }
 
   const typeFilterChangeHandler = (index) => {
-    setTypeFilters(prev => filterChangeHandler(index, prev));
+    setTypeFilters(prev => filterCheckboxChangeHandler(index, prev));
   }
 
   const distanceFilterChangeHandler = (index) => {
-    setDistanceFilters(prev => filterChangeHandler(index, prev));
+    setDistanceFilters(prev => filterCheckboxChangeHandler(index, prev));
+  }
+
+  const keywordFilterChangeHandler = (index) => {
+    setKeywordFilters(prev => filterCheckboxChangeHandler(index, prev));
   }
 
   const airOkChangeHandler = () => {
     setAirOk(prev => !prev);
+  }
+
+  const costFilterChangeHandler = (value, comp) => {
+    setCostFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
+  const strFilterChangeHandler = (value, comp) => {
+    setStrFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
+  const velocityFilterChangeHandler = (value, comp) => {
+    setVelocityFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
+  const homingFilterChangeHandler = (value, comp) => {
+    setHomingFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
+  const recoveryFilterChangeHandler = (value, comp) => {
+    setRecoveryFilters(prev => filterSelectChangeHandler(value, comp, prev));
   }
 
   useEffect(() => {
@@ -81,72 +182,26 @@ export default function Home(props) {
         </h1>
 
         <form className='flex flex-col md:flex-row flex-wrap justify-center gap-4 p-4'>
-          <div className='border-black border p-4 bg-white flex flex-wrap'>
-            <fieldset className='flex flex-wrap gap-4'>
-              <legend className='font-bold mb-2'>School:</legend>
-              {schoolFilters.map((item, index) => {
-                const { name, checked } = item;
-
-                return (
-                  <div className='flex flex-wrap items-center gap-1' key={name}>
-                    <input checked={checked} onChange={() => schoolFilterChangeHandler(index)} type="checkbox" name="school" value={name} id={name} />
-                    <label htmlFor={name}>{name}</label>
-                  </div>
-                )
-              })}
-            </fieldset>
-          </div>
-
-          <div className='border-black border p-4 bg-white flex flex-wrap'>
-            <fieldset className='flex flex-wrap gap-4'>
-              <legend className='font-bold mb-2'>Type:</legend>
-              {typeFilters.map((item, index) => {
-                const { name, checked } = item;
-
-                return (
-                  <div className='flex flex-wrap items-center gap-1' key={name}>
-                    <input checked={checked} onChange={() => typeFilterChangeHandler(index)} type="checkbox" name="type" value={name} id={name} />
-                    <label htmlFor={name}>{name}</label>
-                  </div>
-                )
-              })}
-            </fieldset>
-          </div>
-
-          <div className='border-black border p-4 bg-white flex flex-wrap'>
-            <fieldset className='flex flex-wrap gap-4'>
-              <legend className='font-bold mb-2'>Distance:</legend>
-              {distanceFilters.map((item, index) => {
-                const { name, checked } = item;
-
-                return (
-                  <div className='flex flex-wrap items-center gap-1' key={name}>
-                    <input checked={checked} onChange={() => distanceFilterChangeHandler(index)} type="checkbox" name="distance" value={name} id={name} />
-                    <label htmlFor={name}>{name}</label>
-                  </div>
-                )
-              })}
-            </fieldset>
-          </div>
-
-          <div className='border-black border p-4 bg-white flex flex-wrap'>
-            <fieldset className='flex flex-wrap gap-4'>
-              <legend className='font-bold mb-2'>Air:</legend>
-              <div className='flex flex-wrap items-center gap-1' key="air_ok">
-                <input checked={airOk} onChange={airOkChangeHandler} type="checkbox" name="air_ok" value={airOk} id="air-ok" />
-                <label htmlFor="air-ok">Perfomable in the air?</label>
-              </div>
-            </fieldset>
-          </div>
+          <Fieldset type="checkboxes" fieldsetName="School" filters={schoolFilters} onChange={schoolFilterChangeHandler} />
+          <Fieldset type="checkboxes" fieldsetName="Type" filters={typeFilters} onChange={typeFilterChangeHandler} />
+          <Fieldset type="checkboxes" fieldsetName="Distance" filters={distanceFilters} onChange={distanceFilterChangeHandler} />
+          <Fieldset type="checkboxes" fieldsetName="Air" filters={[ {name: 'Performable in the air?', checked: airOk }]} onChange={airOkChangeHandler} />
+          <Fieldset type="select" fieldsetName="Cost" filters={costFilters} onChange={costFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Str/Def" filters={strFilters} onChange={strFilterChangeHandler} />
+          <Fieldset type="checkboxes" fieldsetName="Keywords" filters={keywordFilters} onChange={keywordFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Velocity" filters={velocityFilters} onChange={velocityFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Homing" filters={homingFilters} onChange={homingFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Recovery" filters={recoveryFilters} onChange={recoveryFilterChangeHandler} />
         </form>
 
-        <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8`}>
+        <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
           {filteredSkills && filteredSkills.map(skill => <Skill key={skill.id} skill={skill} />)}
         </div>
       </main>
 
       <footer className='text-[#eee] text-center pb-8'>
         <p>Site created by <a className='underline hover:no-underline' href="mailto:jesmasterha@gmail.com">Jesmaster</a></p>
+        <p><a rel="noreferrer" target="_blank" className='underline hover:no-underline' href="https://github.com/Jesmaster/pd-skills">https://github.com/Jesmaster/pd-skills</a></p>
       </footer>
     </div>
   )
@@ -154,15 +209,44 @@ export default function Home(props) {
 
 export async function getStaticProps(context) {
   const skills = await getSkills({});
-  const allSchoolFilters = ['Psycho', 'Optical', 'Nature', 'Ki', 'Faith'].map(item => { return { name: item, checked: false }} );
+  const allSchoolFilters = ['Psycho', 'Optical', 'Nature', 'Ki', 'Faith'].map(item => { return { name: item, checked: false } });
   const allTypeFilters = ['Attack', 'Defense', 'Erase', 'Environment', 'Status', 'Special'].map(item => { return { name: item, checked: false } });
   const allDistanceFilters = ['short', 'medium', 'long', 'all', 'self', 'auto', 'mine', 'capsule'].map(item => { return { name: item, checked: false } });
+  const allCosts = { items: ['', 0, 1, 2, 3, 4, 5, 6, 7, 8, 99, 'X'], comp: 'eq', value: '' };
+  const allStr = { items: ['', 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 'X'], comp: 'eq', value: '' };
+  const allKeywords = [
+    'Absorb',
+    'Arc',
+    'Barrier',
+    'Brush',
+    'Course',
+    'Crawl',
+    'Fall',
+    'Hole',
+    'Move',
+    'Object',
+    'Parabola',
+    'Rain',
+    'Reflect',
+    'Shelter'
+  ].map(item => { return { name: item, checked: false } });
+
+  const rankings = ['', 1, 2, 3, 4, 5];
+  const allVelocity = { items: rankings, comp: 'eq', value: ''};
+  const allHoming = { items: rankings, comp: 'eq', value: ''};
+  const allRecovery = { items: rankings, comp: 'eq', value: ''};
 
   return {
     props: {
       allSchoolFilters,
       allTypeFilters,
       allDistanceFilters,
+      allCosts,
+      allStr,
+      allKeywords,
+      allVelocity,
+      allHoming,
+      allRecovery,
       skills,
     }
   }
