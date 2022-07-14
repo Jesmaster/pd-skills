@@ -10,7 +10,7 @@ import { getSkills } from '../lib/query'
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Home(props) {
-  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr } = props;
+  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords } = props;
 
   const [filteredSkills, setFilteredSkills] = useState(skills);
   
@@ -20,6 +20,7 @@ export default function Home(props) {
   const [airOk, setAirOk] = useState(false);
   const [costFilters, setCostFilters] = useState(allCosts);
   const [strFilters, setStrFilters] = useState(allStr);
+  const [keywordFilters, setKeywordFilters] = useState(allKeywords);
 
   const schoolFilter = useMemo(() => {
     return schoolFilters.filter(item => item.checked).map(item => item.name);
@@ -32,6 +33,10 @@ export default function Home(props) {
   const distanceFilter = useMemo(() => {
     return distanceFilters.filter(item => item.checked).map(item => item.name)
   }, [distanceFilters]);
+
+  const keywordFilter = useMemo(() => {
+    return keywordFilters.filter(item => item.checked).map(item => item.name)
+  }, [keywordFilters]);
 
   const { value: costFilter, comp: costOpFilter } = costFilters;
   const { value: strFilter, comp: strOpFilter } = strFilters;
@@ -46,8 +51,9 @@ export default function Home(props) {
       costOp: costOpFilter,
       str: strFilter,
       strOp: strOpFilter,
+      keyword: keywordFilter,
     }
-  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter]);
+  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter]);
 
   const swrKey = useMemo(() => {
     
@@ -104,6 +110,10 @@ export default function Home(props) {
     setDistanceFilters(prev => filterCheckboxChangeHandler(index, prev));
   }
 
+  const keywordFilterChangeHandler = (index) => {
+    setKeywordFilters(prev => filterCheckboxChangeHandler(index, prev));
+  }
+
   const airOkChangeHandler = () => {
     setAirOk(prev => !prev);
   }
@@ -142,6 +152,7 @@ export default function Home(props) {
           <Fieldset type="checkboxes" fieldsetName="Air" filters={[ {name: 'Performable in the air?', checked: airOk }]} onChange={airOkChangeHandler} />
           <Fieldset type="select" fieldsetName="Cost" filters={costFilters} onChange={costFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Str/Def" filters={strFilters} onChange={strFilterChangeHandler} />
+          <Fieldset type="checkboxes" fieldsetName="Keywords" filters={keywordFilters} onChange={keywordFilterChangeHandler} />
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
@@ -164,6 +175,22 @@ export async function getStaticProps(context) {
   const allDistanceFilters = ['short', 'medium', 'long', 'all', 'self', 'auto', 'mine', 'capsule'].map(item => { return { name: item, checked: false } });
   const allCosts = { items: ['', 0, 1, 2, 3, 4, 5, 6, 7, 8, 99, 'X'], comp: 'eq', value: '' };
   const allStr = { items: ['', 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 'X'], comp: 'eq', value: '' };
+  const allKeywords = [
+    'Absorb',
+    'Arc',
+    'Barrier',
+    'Brush',
+    'Course',
+    'Crawl',
+    'Fall',
+    'Hole',
+    'Move',
+    'Object',
+    'Parabola',
+    'Rain',
+    'Reflect',
+    'Shelter'
+  ].map(item => { return { name: item, checked: false } });
 
   return {
     props: {
@@ -172,6 +199,7 @@ export async function getStaticProps(context) {
       allDistanceFilters,
       allCosts,
       allStr,
+      allKeywords,
       skills,
     }
   }

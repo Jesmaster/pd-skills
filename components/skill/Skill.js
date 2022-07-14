@@ -22,7 +22,7 @@ const Skill = (props) => {
         <div className={`p-3.5 md:p-6 relative border-l-4 border-black rounded-tr-lg w-full max-w-lg bg-${skill.type.toLowerCase()} ${styles.skill}`}>
             <header className={`flex items-center justify-between`}>
                 <div className={`flex items-center relative gap-2 ${styles['skill-header']}`}>
-                    <span>{skill.id}</span>
+                    <span>{`${skill.id < 10 ? '00' : skill.id < 100 ? '0' : ''}${skill.id}`}</span>
                     <h2 className='font-bold text-2xl md:text-4xl'>{skill.name}</h2>
                 </div>
                 <div>
