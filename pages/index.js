@@ -52,9 +52,9 @@ const fetcher = async url => {
 };
 
 export default function Home(props) {
-  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery } = props;
+  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery, allFilteredSkills } = props;
 
-  const [filteredSkills, setFilteredSkills] = useState(skills);
+  const [filteredSkills, setFilteredSkills] = useState(new Set(allFilteredSkills));
   
   const [schoolFilters, setSchoolFilters] = useState(allSchoolFilters);
   const [typeFilters, setTypeFilters] = useState(allTypeFilters);
@@ -157,7 +157,7 @@ export default function Home(props) {
     revalidateOnFocus: false,
   });
 
-  const noFilters = swrKey === '/api/skills';
+  const noFilters = skills.length === filteredSkills.size || swrKey === '/api/skills';
   const resetDisabled = resetting || noFilters;
 
   const filterCheckboxChangeHandler = (index, items) => {
@@ -233,7 +233,7 @@ export default function Home(props) {
   useEffect(() => {
     if (isValidating === false && data) {
       setResetting(false);
-      setFilteredSkills(data);
+      setFilteredSkills(new Set(data));
     }
   }, [data, isValidating]);
 
@@ -265,7 +265,7 @@ export default function Home(props) {
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
-          {skills && skills.map(skill => <Skill visible={noFilters || filteredSkills.find(f => f.id === skill.id)} key={skill.id} skill={skill} />)}
+          {skills && skills.map(skill => <Skill visible={noFilters || filteredSkills.has(skill.id)} key={skill.id} skill={skill} />)}
         </div>
       </main>
 
@@ -278,7 +278,7 @@ export default function Home(props) {
 }
 
 export async function getStaticProps(context) {
-  const skills = await getSkills({});
+  const skills = await getSkills({}, false);
   const allSchoolFilters = ['Psycho', 'Optical', 'Nature', 'Ki', 'Faith'].map(item => { return { name: item, checked: false } });
   const allTypeFilters = ['Attack', 'Defense', 'Erase', 'Environment', 'Status', 'Special'].map(item => { return { name: item, checked: false } });
   const allDistanceFilters = ['short', 'medium', 'long', 'all', 'self', 'auto', 'mine', 'capsule'].map(item => { return { name: item, checked: false } });
@@ -306,6 +306,8 @@ export async function getStaticProps(context) {
   const allHoming = { items: rankings, comp: 'eq', value: ''};
   const allRecovery = { items: rankings, comp: 'eq', value: ''};
 
+  const allFilteredSkills = skills.map(skill => skill.id);
+
   return {
     props: {
       allSchoolFilters,
@@ -317,6 +319,7 @@ export async function getStaticProps(context) {
       allVelocity,
       allHoming,
       allRecovery,
+      allFilteredSkills,
       skills,
     }
   }
