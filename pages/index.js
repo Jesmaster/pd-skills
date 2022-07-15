@@ -157,7 +157,8 @@ export default function Home(props) {
     revalidateOnFocus: false,
   });
 
-  const resetDisabled = resetting || swrKey === '/api/skills';
+  const noFilters = swrKey === '/api/skills';
+  const resetDisabled = resetting || noFilters;
 
   const filterCheckboxChangeHandler = (index, items) => {
     return items.map((item, delta) => 
@@ -264,7 +265,7 @@ export default function Home(props) {
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
-          {filteredSkills && filteredSkills.map(skill => <Skill key={skill.id} skill={skill} />)}
+          {skills && skills.map(skill => <Skill visible={noFilters || filteredSkills.find(f => f.id === skill.id)} key={skill.id} skill={skill} />)}
         </div>
       </main>
 
