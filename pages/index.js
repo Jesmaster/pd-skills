@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import Skill from '../components/skill/Skill'
 import Fieldset from '../components/form/Fieldset'
 import useSWR from 'swr'
@@ -36,7 +36,6 @@ const storageAvailable = (type) => {
 const localAvailable = storageAvailable('localStorage');
 
 const fetcher = async url => {
-  
   if (localAvailable && localStorage.getItem(url)) {
     return JSON.parse(localStorage.getItem(url));
   }
@@ -67,6 +66,9 @@ export default function Home(props) {
   const [velocityFilters, setVelocityFilters] = useState(allVelocity);
   const [homingFilters, setHomingFilters] = useState(allHoming);
   const [recoveryFilters, setRecoveryFilters] = useState(allRecovery);
+  const [resetting, setResetting] = useState(false);
+
+  const [isPending, startTransition] = useTransition();
 
   const schoolFilter = useMemo(() => {
     return schoolFilters.filter(item => item.checked).map(item => item.name);
@@ -148,12 +150,14 @@ export default function Home(props) {
 
     const searchParams = QueryString.stringify(buildParams());
 
-    return `/api/skills${searchParams.toString !== '' ? `?${searchParams.toString()}` : ''}`;
+    return `/api/skills${searchParams.toString() !== '' ? `?${searchParams.toString()}` : ''}`;
   }, [filters]);
 
   const { data, error, isValidating } = useSWR(swrKey, fetcher, {
     revalidateOnFocus: false,
   });
+
+  const resetDisabled = resetting || swrKey === '/api/skills';
 
   const filterCheckboxChangeHandler = (index, items) => {
     return items.map((item, delta) => 
@@ -205,8 +209,29 @@ export default function Home(props) {
     setRecoveryFilters(prev => filterSelectChangeHandler(value, comp, prev));
   }
 
+  const resetFiltersHandler = (e) => {
+    e.preventDefault();
+
+    setResetting(true);
+
+    startTransition(() => {
+      setFilteredSkills(skills);
+      setSchoolFilters(allSchoolFilters);
+      setTypeFilters(allTypeFilters);
+      setDistanceFilters(allDistanceFilters);
+      setAirOk(false);
+      setCostFilters(allCosts);
+      setStrFilters(allStr);
+      setKeywordFilters(allKeywords);
+      setVelocityFilters(allVelocity);
+      setHomingFilters(allHoming);
+      setRecoveryFilters(allRecovery);
+    });
+  }
+
   useEffect(() => {
     if (isValidating === false && data) {
+      setResetting(false);
       setFilteredSkills(data);
     }
   }, [data, isValidating]);
@@ -224,7 +249,7 @@ export default function Home(props) {
           Phantom Dust Skill List
         </h1>
 
-        <form className='flex flex-col md:flex-row flex-wrap justify-center gap-4 p-4'>
+        <form className='flex flex-col md:flex-row flex-wrap items-center justify-center gap-4 p-4'>
           <Fieldset type="checkboxes" fieldsetName="School" filters={schoolFilters} onChange={schoolFilterChangeHandler} />
           <Fieldset type="checkboxes" fieldsetName="Type" filters={typeFilters} onChange={typeFilterChangeHandler} />
           <Fieldset type="checkboxes" fieldsetName="Distance" filters={distanceFilters} onChange={distanceFilterChangeHandler} />
@@ -235,6 +260,7 @@ export default function Home(props) {
           <Fieldset type="select" fieldsetName="Velocity" filters={velocityFilters} onChange={velocityFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Homing" filters={homingFilters} onChange={homingFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Recovery" filters={recoveryFilters} onChange={recoveryFilterChangeHandler} />
+          <button disabled={resetDisabled} className={`py-2 px-4 bg-slate-300 ${resetDisabled ? 'cursor-not-allowed' : ''}`} onClick={resetFiltersHandler}>{resetting ? 'Resetting...' : 'Reset Filters'}</button>
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
