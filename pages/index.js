@@ -1,13 +1,55 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import Skill from '../components/skill/Skill'
 import Fieldset from '../components/form/Fieldset'
 import useSWR from 'swr'
 import QueryString from 'qs'
 import { getSkills } from '../lib/query'
 
-const fetcher = (url) => fetch(url).then((res) => res.json());
+//https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+const storageAvailable = (type) => {
+  let storage;
+  try {
+      storage = window[type];
+      const x = '__storage_test__';
+      storage.setItem(x, x);
+      storage.removeItem(x);
+      return true;
+  }
+  catch(e) {
+      return e instanceof DOMException && (
+          // everything except Firefox
+          e.code === 22 ||
+          // Firefox
+          e.code === 1014 ||
+          // test name field too, because code might not be present
+          // everything except Firefox
+          e.name === 'QuotaExceededError' ||
+          // Firefox
+          e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+          // acknowledge QuotaExceededError only if there's something already stored
+          (storage && storage.length !== 0);
+  }
+}
+
+const localAvailable = storageAvailable('localStorage');
+
+const fetcher = async url => {
+  if (localAvailable && localStorage.getItem(url)) {
+    return JSON.parse(localStorage.getItem(url));
+  }
+  else {
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (localAvailable) {
+      localStorage.setItem(url, JSON.stringify(result));
+    }
+
+    return result;
+  }
+};
 
 export default function Home(props) {
   const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery } = props;
@@ -24,6 +66,9 @@ export default function Home(props) {
   const [velocityFilters, setVelocityFilters] = useState(allVelocity);
   const [homingFilters, setHomingFilters] = useState(allHoming);
   const [recoveryFilters, setRecoveryFilters] = useState(allRecovery);
+  const [resetting, setResetting] = useState(false);
+
+  const [isPending, startTransition] = useTransition();
 
   const schoolFilter = useMemo(() => {
     return schoolFilters.filter(item => item.checked).map(item => item.name);
@@ -105,12 +150,14 @@ export default function Home(props) {
 
     const searchParams = QueryString.stringify(buildParams());
 
-    return `/api/skills${searchParams.toString !== '' ? `?${searchParams.toString()}` : ''}`;
+    return `/api/skills${searchParams.toString() !== '' ? `?${searchParams.toString()}` : ''}`;
   }, [filters]);
 
   const { data, error, isValidating } = useSWR(swrKey, fetcher, {
     revalidateOnFocus: false,
   });
+
+  const resetDisabled = resetting || swrKey === '/api/skills';
 
   const filterCheckboxChangeHandler = (index, items) => {
     return items.map((item, delta) => 
@@ -162,8 +209,29 @@ export default function Home(props) {
     setRecoveryFilters(prev => filterSelectChangeHandler(value, comp, prev));
   }
 
+  const resetFiltersHandler = (e) => {
+    e.preventDefault();
+
+    setResetting(true);
+
+    startTransition(() => {
+      setFilteredSkills(skills);
+      setSchoolFilters(allSchoolFilters);
+      setTypeFilters(allTypeFilters);
+      setDistanceFilters(allDistanceFilters);
+      setAirOk(false);
+      setCostFilters(allCosts);
+      setStrFilters(allStr);
+      setKeywordFilters(allKeywords);
+      setVelocityFilters(allVelocity);
+      setHomingFilters(allHoming);
+      setRecoveryFilters(allRecovery);
+    });
+  }
+
   useEffect(() => {
     if (isValidating === false && data) {
+      setResetting(false);
       setFilteredSkills(data);
     }
   }, [data, isValidating]);
@@ -181,7 +249,7 @@ export default function Home(props) {
           Phantom Dust Skill List
         </h1>
 
-        <form className='flex flex-col md:flex-row flex-wrap justify-center gap-4 p-4'>
+        <form className='flex flex-col md:flex-row flex-wrap items-center justify-center gap-4 p-4'>
           <Fieldset type="checkboxes" fieldsetName="School" filters={schoolFilters} onChange={schoolFilterChangeHandler} />
           <Fieldset type="checkboxes" fieldsetName="Type" filters={typeFilters} onChange={typeFilterChangeHandler} />
           <Fieldset type="checkboxes" fieldsetName="Distance" filters={distanceFilters} onChange={distanceFilterChangeHandler} />
@@ -192,6 +260,7 @@ export default function Home(props) {
           <Fieldset type="select" fieldsetName="Velocity" filters={velocityFilters} onChange={velocityFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Homing" filters={homingFilters} onChange={homingFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Recovery" filters={recoveryFilters} onChange={recoveryFilterChangeHandler} />
+          <button disabled={resetDisabled} className={`py-2 px-4 bg-slate-300 ${resetDisabled ? 'cursor-not-allowed' : ''}`} onClick={resetFiltersHandler}>{resetting ? 'Resetting...' : 'Reset Filters'}</button>
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
