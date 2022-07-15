@@ -9,7 +9,7 @@ import { GiAbstract103 } from "react-icons/gi"
 import styles from './Skill.module.css';
 
 const Skill = (props) => {
-    const { skill } = props;
+    const { skill, visible } = props;
     const schoolImages = {
         Psycho: schoolPsycho,
         Optical: schoolOptical,
@@ -19,7 +19,7 @@ const Skill = (props) => {
       };
       
       return (
-        <div className={`p-3.5 md:p-6 relative border-l-4 border-black rounded-tr-lg w-full max-w-lg bg-${skill.type.toLowerCase()} ${styles.skill}`}>
+        <div className={`p-3.5 md:p-6 relative border-l-4 border-black rounded-tr-lg w-full max-w-lg bg-${skill.type.toLowerCase()} ${styles.skill} ${!visible && 'hidden'}`}>
             <header className={`flex items-center justify-between`}>
                 <div className={`flex items-center relative gap-2 ${styles['skill-header']}`}>
                     <span>{`${skill.id < 10 ? '00' : skill.id < 100 ? '0' : ''}${skill.id}`}</span>
