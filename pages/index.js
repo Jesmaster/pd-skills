@@ -58,7 +58,7 @@ const fetcher = async url => {
 };
 
 export default function Home(props) {
-  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery, allFilteredSkills } = props;
+  const { skills, allSchoolFilters, allTypeFilters, allDistanceFilters, allCosts, allStr, allKeywords, allVelocity, allHoming, allRecovery, allUse, allFilteredSkills } = props;
 
   const [filteredSkills, setFilteredSkills] = useState(new Set(allFilteredSkills));
   
@@ -72,6 +72,7 @@ export default function Home(props) {
   const [velocityFilters, setVelocityFilters] = useState(allVelocity);
   const [homingFilters, setHomingFilters] = useState(allHoming);
   const [recoveryFilters, setRecoveryFilters] = useState(allRecovery);
+  const [useFilters, setUseFilters] = useState(allUse);
   const [resetting, setResetting] = useState(false);
 
   const [isPending, startTransition] = useTransition();
@@ -97,6 +98,7 @@ export default function Home(props) {
   const { value: velocityFilter, comp: velocityOpFilter } = velocityFilters;
   const { value: homingFilter, comp: homingOpFilter } = homingFilters;
   const { value: recoveryFilter, comp: recoveryOpFilter } = recoveryFilters;
+  const { value: useFilter, comp: useOpFilter } = useFilters;
 
   const filters = useMemo(() => {
     return {
@@ -115,8 +117,10 @@ export default function Home(props) {
       homingOp: homingOpFilter,
       recovery: recoveryFilter,
       recoveryOp: recoveryOpFilter,
+      use: useFilter,
+      useOp: useOpFilter,
     }
-  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter, velocityFilter, velocityOpFilter, homingFilter, homingOpFilter, recoveryFilter, recoveryOpFilter]);
+  }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter, velocityFilter, velocityOpFilter, homingFilter, homingOpFilter, recoveryFilter, recoveryOpFilter, useFilter, useOpFilter]);
 
   const swrKey = useMemo(() => {
     
@@ -127,16 +131,21 @@ export default function Home(props) {
         delete params.costOp;
       }
       else if (params.cost === 'X' && params.costOp !== 'eq') {
-        delete params.cost;
-        delete params.costOp;
+        params.costOp = 'eq';
       }
 
       if (params.str === undefined) {
         delete params.strOp;
       }
       else if (params.str === 'X' && params.strOp !== 'eq') {
-        delete params.str;
-        delete params.strOp;
+        params.strOp = 'eq';
+      }
+
+      if (params.use === undefined) {
+        delete params.useOp;
+      }
+      else if (params.use === 'inf' && params.useOp !== 'eq') {
+        params.useOp = 'eq';
       }
 
       if (params.velocity === undefined) {
@@ -216,6 +225,10 @@ export default function Home(props) {
     setRecoveryFilters(prev => filterSelectChangeHandler(value, comp, prev));
   }
 
+  const useFilterChangeHandler = (value, comp) => {
+    setUseFilters(prev => filterSelectChangeHandler(value, comp, prev));
+  }
+
   const resetFiltersHandler = (e) => {
     e.preventDefault();
 
@@ -233,6 +246,7 @@ export default function Home(props) {
       setVelocityFilters(allVelocity);
       setHomingFilters(allHoming);
       setRecoveryFilters(allRecovery);
+      setUseFilters(allUse);
     });
   }
 
@@ -264,10 +278,11 @@ export default function Home(props) {
           <Fieldset type="select" fieldsetName="Cost" filters={costFilters} onChange={costFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Str/Def" filters={strFilters} onChange={strFilterChangeHandler} />
           <Fieldset type="checkboxes" fieldsetName="Keywords" filters={keywordFilters} onChange={keywordFilterChangeHandler} />
+          <Fieldset type="select" fieldsetName="Uses" filters={useFilters} onChange={useFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Velocity" filters={velocityFilters} onChange={velocityFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Homing" filters={homingFilters} onChange={homingFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Recovery" filters={recoveryFilters} onChange={recoveryFilterChangeHandler} />
-          <button disabled={resetDisabled} className={`py-2 px-4 bg-slate-300 ${resetDisabled ? 'cursor-not-allowed' : ''}`} onClick={resetFiltersHandler}>{resetting ? 'Resetting...' : 'Reset Filters'}</button>
+          <button disabled={resetDisabled} className={`py-2 px-4 bg-slate-300 ${resetDisabled ? 'cursor-not-allowed' : ''}`} onClick={resetFiltersHandler}>{resetting ? 'Resetting....' : 'Reset Filters'}</button>
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
@@ -306,6 +321,7 @@ export async function getStaticProps(context) {
     'Reflect',
     'Shelter'
   ].map(item => { return { name: item, checked: false } });
+  const allUse = { items: ['', 1, 2, 3, 5, 'inf'], comp: 'eq', value: '' };
 
   const rankings = ['', 1, 2, 3, 4, 5];
   const allVelocity = { items: rankings, comp: 'eq', value: ''};
@@ -326,6 +342,7 @@ export async function getStaticProps(context) {
       allHoming,
       allRecovery,
       allFilteredSkills,
+      allUse,
       skills,
     }
   }
