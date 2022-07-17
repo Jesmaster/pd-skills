@@ -34,8 +34,14 @@ const storageAvailable = (type) => {
 }
 
 const localAvailable = storageAvailable('localStorage');
+const localVersion = '1';
 
 const fetcher = async url => {
+  if (localAvailable && localStorage.getItem('version') !== localVersion) {
+    localStorage.clear();
+    localStorage.setItem('version', localVersion);
+  }
+
   if (localAvailable && localStorage.getItem(url)) {
     return JSON.parse(localStorage.getItem(url));
   }
