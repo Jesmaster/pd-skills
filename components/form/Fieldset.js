@@ -31,7 +31,7 @@ const Fieldset = (props) => {
                     <div className='flex flex-wrap items-center gap-1'>
                         <select className={`p-2`} ref={selectItemRef} onChange={selectChangeHandler} value={filters.value} name={fieldsetNameLower} id={fieldsetNameLower}>
                             {filters.items.map(item =>
-                                <option key={`${fieldsetNameLower}-${item === '' ? 'all' : item}`} value={item}>{item === '' ? 'all' : item}</option>
+                                <option key={`${fieldsetNameLower}-${item === '' ? 'all' : item}`} value={item}>{item === '' ? 'all' : item === 'inf' ? '∞': item}</option>
                             )}
                         </select>
                         <select className={`p-2`} ref={selectCompRef} onChange={selectChangeHandler} value={filters.comp} name={`${fieldsetNameLower}-op`} id={`${fieldsetNameLower}-op`}>
