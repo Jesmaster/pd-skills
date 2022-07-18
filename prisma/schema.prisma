@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model skills {
+  id        Int      @id
+  name      String  @unique
+  school    String
+  type      String
+  cost      Int?
+  str       Int?
+  use       Int?
+  distance  String
+  rarity    Int
+  skilltext String?
+  air       Boolean @default(false)
+  velocity  Int?
+  homing    Int?
+  recovery  Int?
+  notes     String?
+  costX     Boolean @default(false)
+  strX      Boolean @default(false)
+  useInf    Boolean @default(false)
+}
