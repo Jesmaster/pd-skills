@@ -6,6 +6,7 @@ import Fieldset from '../components/form/Fieldset'
 import useSWR from 'swr'
 import QueryString from 'qs'
 import { getSkills } from '../lib/query'
+import { useRouter } from 'next/router'
 
 //https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
 const storageAvailable = (type) => {
@@ -76,6 +77,9 @@ export default function Home(props) {
   const [resetting, setResetting] = useState(false);
 
   const [isPending, startTransition] = useTransition();
+
+  const { query, isReady } = useRouter();
+  const { filters: queryFilters } = query;
 
   const schoolFilter = useMemo(() => {
     return schoolFilters.filter(item => item.checked).map(item => item.name);
@@ -256,6 +260,19 @@ export default function Home(props) {
       setFilteredSkills(new Set(data));
     }
   }, [data, isValidating]);
+
+  useEffect(() => {
+    if (isReady && queryFilters) {  
+      try {
+        const buf = Buffer.from(queryFilters, 'base64');
+        const filters = JSON.parse(buf);
+      }
+      catch (error) {
+        console.log('Filters found but unable to decode.');
+      }
+
+    }
+  }, [isReady, queryFilters]);
 
   return (
     <div className={styles.container}>
