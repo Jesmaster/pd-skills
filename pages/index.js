@@ -7,6 +7,7 @@ import useSWR from 'swr'
 import QueryString from 'qs'
 import { getSkills } from '../lib/query'
 import { useRouter } from 'next/router'
+import { FaCopy } from 'react-icons/fa'
 
 //https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
 const storageAvailable = (type) => {
@@ -75,6 +76,7 @@ export default function Home(props) {
   const [recoveryFilters, setRecoveryFilters] = useState(allRecovery);
   const [useFilters, setUseFilters] = useState(allUse);
   const [resetting, setResetting] = useState(false);
+  const [displaySkills, setDisplaySkills] = useState(false);
 
   const [isPending, startTransition] = useTransition();
 
@@ -126,51 +128,50 @@ export default function Home(props) {
     }
   }, [schoolFilter, typeFilter, distanceFilter, airOk, costFilter, costOpFilter, strFilter, strOpFilter, keywordFilter, velocityFilter, velocityOpFilter, homingFilter, homingOpFilter, recoveryFilter, recoveryOpFilter, useFilter, useOpFilter]);
 
-  const swrKey = useMemo(() => {
-    
-    const buildParams = () => {
-      let params = Object.entries(filters).reduce((a,[k,v]) => (v === '' || v === false || (Array.isArray(v) && v.length === 0) ? a : (a[k]=v, a)), {});
+  const buildParams = useMemo(() => {
+    let params = Object.entries(filters).reduce((a,[k,v]) => (v === '' || v === false || (Array.isArray(v) && v.length === 0) ? a : (a[k]=v, a)), {});
 
-      if (params.cost === undefined) {
-        delete params.costOp;
-      }
-      else if (params.cost === 'X' && params.costOp !== 'eq') {
-        params.costOp = 'eq';
-      }
-
-      if (params.str === undefined) {
-        delete params.strOp;
-      }
-      else if (params.str === 'X' && params.strOp !== 'eq') {
-        params.strOp = 'eq';
-      }
-
-      if (params.use === undefined) {
-        delete params.useOp;
-      }
-      else if (params.use === 'inf' && params.useOp !== 'eq') {
-        params.useOp = 'eq';
-      }
-
-      if (params.velocity === undefined) {
-        delete params.velocityOp;
-      }
-
-      if (params.homing === undefined) {
-        delete params.homingOp;
-      }
-
-      if (params.recovery === undefined) {
-        delete params.recoveryOp;
-      }
-
-      return params;
+    if (params.cost === undefined) {
+      delete params.costOp;
+    }
+    else if (params.cost === 'X' && params.costOp !== 'eq') {
+      params.costOp = 'eq';
     }
 
-    const searchParams = QueryString.stringify(buildParams());
+    if (params.str === undefined) {
+      delete params.strOp;
+    }
+    else if (params.str === 'X' && params.strOp !== 'eq') {
+      params.strOp = 'eq';
+    }
+
+    if (params.use === undefined) {
+      delete params.useOp;
+    }
+    else if (params.use === 'inf' && params.useOp !== 'eq') {
+      params.useOp = 'eq';
+    }
+
+    if (params.velocity === undefined) {
+      delete params.velocityOp;
+    }
+
+    if (params.homing === undefined) {
+      delete params.homingOp;
+    }
+
+    if (params.recovery === undefined) {
+      delete params.recoveryOp;
+    }
+
+    return params;
+  }, [filters]);
+
+  const swrKey = useMemo(() => {
+    const searchParams = QueryString.stringify(buildParams);
 
     return `/api/skills${searchParams.toString() !== '' ? `?${searchParams.toString()}` : ''}`;
-  }, [filters]);
+  }, [buildParams]);
 
   const { data, error, isValidating } = useSWR(swrKey, fetcher, {
     revalidateOnFocus: false,
@@ -233,6 +234,13 @@ export default function Home(props) {
     setUseFilters(prev => filterSelectChangeHandler(value, comp, prev));
   }
 
+  const copyFiltersHandler = (e) => {
+    e.preventDefault();
+
+    const buf = Buffer.from(JSON.stringify(buildParams));
+    navigator.clipboard.writeText(`https://${window.location.hostname}/?filters=${buf.toString('base64')}`);
+  }
+
   const resetFiltersHandler = (e) => {
     e.preventDefault();
 
@@ -262,15 +270,38 @@ export default function Home(props) {
   }, [data, isValidating]);
 
   useEffect(() => {
-    if (isReady && queryFilters) {  
-      try {
-        const buf = Buffer.from(queryFilters, 'base64');
-        const filters = JSON.parse(buf);
-      }
-      catch (error) {
-        console.log('Filters found but unable to decode.');
-      }
+    if (isReady) {
 
+      if (queryFilters) {  
+        try {
+          const buf = Buffer.from(queryFilters, 'base64');
+          const filters = JSON.parse(buf.toString());
+
+          filters.school && setSchoolFilters(prev => prev.map(f => filters.school.includes(f.name) ? { ...f, checked: true } : f));
+          filters.type && setTypeFilters(prev => prev.map(f => filters.type.includes(f.name) ? { ...f, checked: true } : f));
+          filters.distance && setDistanceFilters(prev => prev.map(f => filters.distance.includes(f.name) ? { ...f, checked: true } : f));
+          filters.air && setAirOk(filters.air);
+          filters.cost && setCostFilters(prev => { return { ...prev, value: filters.cost, comp: filters.costOp } });
+          filters.str && setStrFilters(prev => { return { ...prev, value: filters.str, comp: filters.strOp } });
+          filters.keyword && setKeywordFilters(prev => prev.map(f => filters.keyword.includes(f.name) ? { ...f, checked: true } : f));
+          filters.use && setUseFilters(prev => { return { ...prev, value: filters.use, comp: filters.useOp } });
+          filters.velocity && setVelocityFilters(prev => { return { ...prev, value: filters.velocity, comp: filters.velocityOp } });
+          filters.homing && setHomingFilters(prev => { return { ...prev, value: filters.homing, comp: filters.homingOp } });
+          filters.recovery && setRecoveryFilters(prev => { return { ...prev, value: filters.recovery, comp: filters.recoveryOp } });
+
+          startTransition(() => {
+            setDisplaySkills(true);
+          });
+        }
+        catch (error) {
+          console.log('Filters found but unable to decode.');
+          setDisplaySkills(true);
+        }
+  
+      }
+      else {
+        setDisplaySkills(true);
+      }
     }
   }, [isReady, queryFilters]);
 
@@ -299,11 +330,14 @@ export default function Home(props) {
           <Fieldset type="select" fieldsetName="Velocity" filters={velocityFilters} onChange={velocityFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Homing" filters={homingFilters} onChange={homingFilterChangeHandler} />
           <Fieldset type="select" fieldsetName="Recovery" filters={recoveryFilters} onChange={recoveryFilterChangeHandler} />
-          <button disabled={resetDisabled} className={`py-2 px-4 bg-slate-300 ${resetDisabled ? 'cursor-not-allowed' : ''}`} onClick={resetFiltersHandler}>{resetting ? 'Resetting....' : 'Reset Filters'}</button>
+          <div className='flex flex-col flex-wrap gap-3'>
+            <button disabled={noFilters} className={`text-[#eee] flex gap-2 items-center ${noFilters && 'cursor-not-allowed'}`} title='Copy a link with your filters' onClick={copyFiltersHandler}><FaCopy /> Copy Filter Link</button>
+            <button disabled={resetDisabled} className={`py-2 px-4 bg-slate-300 ${resetDisabled ? 'cursor-not-allowed' : ''}`} onClick={resetFiltersHandler}>{resetting ? 'Resetting....' : 'Reset Filters'}</button>
+          </div>
         </form>
 
         <div className={`flex flex-wrap flex-col md:flex-row align-top gap-6 justify-center px-4 mt-8 w-full`}>
-          {skills && skills.map(skill => <Skill visible={noFilters || filteredSkills.has(skill.id)} key={skill.id} skill={skill} />)}
+          {displaySkills && skills && skills.map(skill => <Skill visible={noFilters || filteredSkills.has(skill.id)} key={skill.id} skill={skill} />)}
         </div>
       </main>
 
