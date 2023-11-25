@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-      --color-attack: 220 107 69;
-      --color-defense: 75 97 220;
-      --color-environment: 75 220 218;
-      --color-erase: 171 75 220;
-      --color-status: 114 220 81;
-      --color-special: 220 218 75;
-    }
+  :root {
+    --color-attack: 220 107 69;
+    --color-defense: 75 97 220;
+    --color-environment: 75 220 218;
+    --color-erase: 171 75 220;
+    --color-status: 114 220 81;
+    --color-special: 220 218 75;
   }
+}
